@@ -32,6 +32,7 @@ class QLearn:
         def _next_state_max_qvalue() -> float:
             return np.max(self.qTable[nextState])
 
+        flag = np.sum(self.qTable[self.currentState])
         currentArgmaxState = np.argmax(self.qTable[self.currentState])
 
         Reward = +10
@@ -40,7 +41,7 @@ class QLearn:
             (1-alpha) * qValue + alpha * \
             (Reward + gamma * _next_state_max_qvalue())
 
-        if not nextState == currentArgmaxState:
+        if not nextState == currentArgmaxState and flag:
             Reward = 2.5
             qValue = self.qTable[self.currentState, currentArgmaxState]
             self.qTable[self.currentState, currentArgmaxState] = \
