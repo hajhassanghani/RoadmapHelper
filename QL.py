@@ -10,7 +10,7 @@ class QLearn:
                  qTable: list or None = None,
                  currentState: int = 0,
                  learningRate: float = 0.25,
-                 discountFactor: float = 0.25):
+                 discountFactor: float = 0.75):
         self.qTable = qTable
         self.states = states
         self.actions = actions
@@ -29,20 +29,29 @@ class QLearn:
         alpha = self.learningRate
         gamma = self.discountFactor
 
-        if not nextState == self.currentState:
-            Reward = +1
+        def _next_state_max_qvalue() -> float:
+            return np.max(self.qTable[nextState])
 
-            def _next_state_max_qvalue() -> float:
-                return np.max(self.qTable[nextState, :])
+        currentArgmaxState = np.argmax(self.qTable[self.currentState])
 
-            qValue = self.qTable[self.currentState, nextState]
-            self.qTable[self.currentState, nextState] = \
-                (1-alpha) * qValue + (Reward - gamma * _next_state_max_qvalue())
+        Reward = +10
+        qValue = self.qTable[self.currentState, nextState]
+        self.qTable[self.currentState, nextState] = \
+            (1-alpha) * qValue + alpha * \
+            (Reward + gamma * _next_state_max_qvalue())
 
-            self.currentState = nextState
+        if not nextState == currentArgmaxState:
+            Reward = 2.5
+            qValue = self.qTable[self.currentState, currentArgmaxState]
+            self.qTable[self.currentState, currentArgmaxState] = \
+                (1-alpha) * qValue - alpha * \
+                (Reward + gamma * _next_state_max_qvalue())
+
+        self.currentState = nextState
 
 
 if __name__ == "__main__":
+    np.set_printoptions(precision=2, suppress=True)
 
     data = []
     with open('data.pkl', 'rb') as f:
@@ -56,7 +65,7 @@ if __name__ == "__main__":
     ql = QLearn(states[:6], actions[:6])
 
     while True:
-        q = int(input('Choose The Next Location: '))
+        q = int(input())
         ql.Update(q)
         print(ql.qTable)
 
