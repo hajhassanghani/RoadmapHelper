@@ -82,5 +82,19 @@ if __name__ == "__main__":
     with open('data.pkl') as f:
         data = _pickle.load(f)
 
+    states, _ = U.UniqueValues(data[1:], 6)
+    actions, _ = U.UniqueValues(data[1:], 0)
+
+    ql = QLearn(states, actions)
+
+    ql.posibleActions()
+    ql.nextAction()
+    
+    while True:
+        ql.posibleActions()
+        q = input('Choose Act: ')
+        if q == '':
+            break
+        ql.Update()
 
     pass
