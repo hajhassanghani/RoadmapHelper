@@ -3,44 +3,18 @@ import Utils as U
 import numpy as np
 
 
-class State(object):
-    def __init__(self, name: str = '', ID: int = 0):
-        self.actions: list = []
-        self.name = name
-        self.ID = ID
-
-
-class Action(object):
-    def __init__(self, name: str = '', ID: int = 0):
-        self.state: State = State()
-        self.name = name
-        self.ID = ID
-
-
-class Rule(object):
-    def __init__(self, qValue: float = 0.0, nextState: State = State()):
-        self.qValue = qValue
-        self.nextState = nextState
-
-
-class QTable(object):
-    def __init__(self, rules: list = []):
-        self.rules: list = rules
-
-
 class QLearn:
-
     def __init__(self,
                  states: list,
                  actions: list,
                  qTable: list or None = None,
-                 initState: int = 0,
+                 currentState: int = 0,
                  learningRate: float = 0.25,
-                 discountFactor: float = 0.5):
+                 discountFactor: float = 0.25):
         self.qTable = qTable
         self.states = states
         self.actions = actions
-        self.initState = initState
+        self.currentState = currentState
 
         assert learningRate > 0 and learningRate < 1
         self.learningRate = learningRate
@@ -51,50 +25,39 @@ class QLearn:
         if qTable == [] or qTable == None:
             self.qTable = np.zeros([len(states), len(actions)])
 
-    def posibleActions(self) -> list:
-        pass
+    def Update(self, nextState: int):
+        alpha = self.learningRate
+        gamma = self.discountFactor
 
-    def nextAction(self) -> Action:
-        pass
+        if not nextState == self.currentState:
+            Reward = +1
 
-    def Update(self, state: State, action: Action, RewardOrPunish: float, nextState: State,
-               learningRate: float or None = None, discountFactor: float or None = None):
-        assert (learningRate > 0 and learningRate < 1) or learningRate == None
-        assert (
-            discountFactor > 0 and discountFactor < 1) or discountFactor == None
+            def _next_state_max_qvalue() -> float:
+                return np.max(self.qTable[nextState, :])
 
-        alpha = self.learningRate if learningRate == None else learningRate
-        gamma = self.discountFactor if discountFactor == None else discountFactor
+            qValue = self.qTable[self.currentState, nextState]
+            self.qTable[self.currentState, nextState] = \
+                (1-alpha) * qValue + (Reward - gamma * _next_state_max_qvalue())
 
-        def _next_state_max_qvalue() -> float:
-            pass
-
-        qValue = self.qTable[state.ID, action.ID].qValue
-        self.qTable[state.ID, action.ID].qValue = \
-            (1-alpha) * qValue + (RewardOrPunish + gamma * _next_state_max_qvalue())
-
-        pass
+            self.currentState = nextState
 
 
 if __name__ == "__main__":
 
     data = []
-    with open('data.pkl') as f:
+    with open('data.pkl', 'rb') as f:
         data = _pickle.load(f)
 
-    states, _ = U.UniqueValues(data[1:], 6)
-    actions, _ = U.UniqueValues(data[1:], 0)
+    GroupByPivot = U.GroupByPivot(data[1:], 7)
 
-    ql = QLearn(states, actions)
+    states = list(GroupByPivot.keys())
+    actions = list(GroupByPivot.values())
 
-    ql.posibleActions()
-    ql.nextAction()
-    
+    ql = QLearn(states[:6], actions[:6])
+
     while True:
-        ql.posibleActions()
-        q = input('Choose Act: ')
-        if q == '':
-            break
-        ql.Update()
+        q = int(input('Choose The Next Location: '))
+        ql.Update(q)
+        print(ql.qTable)
 
     pass
